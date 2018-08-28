@@ -6,6 +6,7 @@
 
 #include "SessionOrganizer.h"
 #include "Util.h"
+#include <algorithm>
 
 SessionOrganizer::SessionOrganizer ( )
 {
@@ -20,7 +21,7 @@ SessionOrganizer::SessionOrganizer ( string filename )
 {
     readInInputFile ( filename );
     conference = new Conference ( parallelTracks, sessionsInTrack, papersInSession );
-    // optimal = new Conference ( parallelTracks, sessionsInTrack, papersInSession );
+    optimal = new Conference ( parallelTracks, sessionsInTrack, papersInSession );
 }
 
 
@@ -30,20 +31,56 @@ double getProbability(double diff, int t)
     return exp(diff/temp);
 }
 
-void SessionOrganizer::organizePapers ( )
+void SessionOrganizer::shufflePapers()
 {
+    random_shuffle(papers.begin(),papers.end());
     int paperCounter = 0;
+    // std::vector<int> papers;
     for ( int i = 0; i < conference->getSessionsInTrack ( ); i++ )
     {
         for ( int j = 0; j < conference->getParallelTracks ( ); j++ )
         {
             for ( int k = 0; k < conference->getPapersInSession ( ); k++ )
             {
-                conference->setPaper ( j, i, k, paperCounter );
+                // papers.push_back(paperCounter);
+                conference->setPaper ( j, i, k, papers.at(paperCounter) );
                 paperCounter++;
             }
         }
     }
+}
+
+void SessionOrganizer::organizePapers ( )
+{
+    int paperCounter = 0;
+    // std::vector<int> papers;
+    for ( int i = 0; i < conference->getSessionsInTrack ( ); i++ )
+    {
+        for ( int j = 0; j < conference->getParallelTracks ( ); j++ )
+        {
+            for ( int k = 0; k < conference->getPapersInSession ( ); k++ )
+            {
+                papers.push_back(paperCounter);
+                // conference->setPaper ( j, i, k, papers[paperCounter] );
+                paperCounter++;
+            }
+        }
+    }
+    shufflePapers();
+    // paperCounter = 0;
+    // random_shuffle(papers.begin(),papers.end());
+    // for ( int i = 0; i < conference->getSessionsInTrack ( ); i++ )
+    // {
+    //     for ( int j = 0; j < conference->getParallelTracks ( ); j++ )
+    //     {
+    //         for ( int k = 0; k < conference->getPapersInSession ( ); k++ )
+    //         {
+    //             // papers.push_back(paperCounter);
+    //             conference->setPaper ( j, i, k, papers[paperCounter] );
+    //             paperCounter++;
+    //         }
+    //     }
+    // }
 
     int k = papersInSession;
     // int tp = parallelTracks*sessionsInTrack;
@@ -89,7 +126,7 @@ void SessionOrganizer::organizePapers ( )
             conference->setPaper(t2o,s2o,p2o,ptmp1);
             score = score + max_del;
         }
-        if(double(clock() - start)/CLOCKS_PER_SEC > 1)
+        if(double(clock() - start)/CLOCKS_PER_SEC > 10)
             break;
     }
     cout << "Iterations: " << count << "\n";

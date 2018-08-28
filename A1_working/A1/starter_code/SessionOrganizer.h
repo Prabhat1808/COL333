@@ -38,8 +38,8 @@ private:
     int sessionsInTrack ;
 
     Conference *conference;
-    // Conference *optimal;
-    // std::vector<int> papers;
+    Conference *optimal;
+    std::vector<int> papers;
 
     double processingTimeInMinutes ;
     double tradeoffCoefficient ; // the tradeoff coefficient
@@ -57,8 +57,8 @@ public:
      * @return the similarity matrix.
      */
     void readInInputFile(string filename);
-    
-    
+
+    void shufflePapers();   
     
     /**
      * Organize the papers according to some algorithm.
