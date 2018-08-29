@@ -31,6 +31,23 @@ double getProbability(double diff, int t)
     return exp(diff/temp);
 }
 
+void SessionOrganizer::updateOptimal()
+{
+    Session temp;
+    for ( int i = 0; i < conference->getSessionsInTrack ( ); i++ )
+    {
+        for ( int j = 0; j < conference->getParallelTracks ( ); j++ )
+        {
+            temp = conference->getTrack(j).getSession(i);
+            for ( int k = 0; k < conference->getPapersInSession ( ); k++ )
+            {
+                // papers.push_back(paperCounter);
+                optimal->setPaper ( j, i, k, temp.getPaper(k));
+            }
+        }
+    }
+}
+
 void SessionOrganizer::shufflePapers()
 {
     random_shuffle(papers.begin(),papers.end());
@@ -67,20 +84,7 @@ void SessionOrganizer::organizePapers ( )
         }
     }
     shufflePapers();
-    // paperCounter = 0;
-    // random_shuffle(papers.begin(),papers.end());
-    // for ( int i = 0; i < conference->getSessionsInTrack ( ); i++ )
-    // {
-    //     for ( int j = 0; j < conference->getParallelTracks ( ); j++ )
-    //     {
-    //         for ( int k = 0; k < conference->getPapersInSession ( ); k++ )
-    //         {
-    //             // papers.push_back(paperCounter);
-    //             conference->setPaper ( j, i, k, papers[paperCounter] );
-    //             paperCounter++;
-    //         }
-    //     }
-    // }
+    updateOptimal();
 
     int k = papersInSession;
     // int tp = parallelTracks*sessionsInTrack;
@@ -91,6 +95,8 @@ void SessionOrganizer::organizePapers ( )
     srand(time(NULL));
     clock_t start = clock();
     long count = 0;
+    int pos = 0, neg = 0;
+    // int tolerance = 0;
     while(true)
     {
         count++;
@@ -125,9 +131,34 @@ void SessionOrganizer::organizePapers ( )
             conference->setPaper(t1o,s1o,p1o,ptmp2);
             conference->setPaper(t2o,s2o,p2o,ptmp1);
             score = score + max_del;
+            pos++;
         }
-        if(double(clock() - start)/CLOCKS_PER_SEC > 10)
+        else
+        {
+            // tolerance++;
+            neg++;
+        }
+
+        if(neg > 20*pos)
+        {
+            pos =0.0;
+            neg = 0.0;
+            cout << "Random Restarting at iteration : " << count << "\n";
+            if(scoreOrganization() > scoreOptimal())
+                updateOptimal();
+            shufflePapers();
+            score = scoreOrganization();
+            cout << "Current Optimal: " << scoreOptimal() << "\n";
+            cout << "New Starting Score: " << score << "\n";
+        }
+        
+        if(double(clock() - start)/CLOCKS_PER_SEC > 60)
+        {
+            cout << scoreOptimal(); 
+            if(scoreOrganization() > scoreOptimal())
+                updateOptimal();
             break;
+        }
     }
     cout << "Iterations: " << count << "\n";
 }
@@ -356,6 +387,58 @@ double SessionOrganizer::scoreOrganization ( )
                 for ( int l = i + 1; l < conference->getParallelTracks ( ); l++ )
                 {
                     Track tmpTrack2 = conference->getTrack ( l );
+                    Session tmpSession2 = tmpTrack2.getSession ( j );
+                    for ( int m = 0; m < tmpSession2.getNumberOfPapers ( ); m++ )
+                    {
+                        int index2 = tmpSession2.getPaper ( m );
+                        score2 += distanceMatrix[index1][index2];
+                    }
+                }
+            }
+        }
+    }
+    double score = score1 + tradeoffCoefficient*score2;
+    return score;
+}
+
+double SessionOrganizer::scoreOptimal ( )
+{
+    // Sum of pairwise similarities per session.
+    double score1 = 0.0;
+    for ( int i = 0; i < optimal->getParallelTracks ( ); i++ )
+    {
+        Track tmpTrack = optimal->getTrack ( i );
+        for ( int j = 0; j < tmpTrack.getNumberOfSessions ( ); j++ )
+        {
+            Session tmpSession = tmpTrack.getSession ( j );
+            for ( int k = 0; k < tmpSession.getNumberOfPapers ( ); k++ )
+            {
+                int index1 = tmpSession.getPaper ( k );
+                for ( int l = k + 1; l < tmpSession.getNumberOfPapers ( ); l++ )
+                {
+                    int index2 = tmpSession.getPaper ( l );
+                    score1 += 1 - distanceMatrix[index1][index2];
+                }
+            }
+        }
+    }
+
+    // Sum of distances for competing papers.
+    double score2 = 0.0;
+    for ( int i = 0; i < optimal->getParallelTracks ( ); i++ )
+    {
+        Track tmpTrack1 = optimal->getTrack ( i );
+        for ( int j = 0; j < tmpTrack1.getNumberOfSessions ( ); j++ )
+        {
+            Session tmpSession1 = tmpTrack1.getSession ( j );
+            for ( int k = 0; k < tmpSession1.getNumberOfPapers ( ); k++ )
+            {
+                int index1 = tmpSession1.getPaper ( k );
+
+                // Get competing papers.
+                for ( int l = i + 1; l < optimal->getParallelTracks ( ); l++ )
+                {
+                    Track tmpTrack2 = optimal->getTrack ( l );
                     Session tmpSession2 = tmpTrack2.getSession ( j );
                     for ( int m = 0; m < tmpSession2.getNumberOfPapers ( ); m++ )
                     {

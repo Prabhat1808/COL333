@@ -58,6 +58,8 @@ public:
      */
     void readInInputFile(string filename);
 
+    void updateOptimal();
+
     void shufflePapers();   
     
     /**
@@ -77,6 +79,8 @@ public:
      * Score the organization.
      * @return the score.
      */
+
+    double scoreOptimal();
     double scoreOrganization();
     
     
