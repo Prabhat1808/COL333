@@ -1,8 +1,3 @@
-/* 
- * File:   Conference.cpp
- * Author: Kapil Thakkar
- * 
- */
 
 #include "Conference.h"
 

@@ -1,8 +1,3 @@
-/* 
- * File:   main.cpp
- * Author: Kapil Thakkar
- *
- */
 
 #include <cstdlib>
 

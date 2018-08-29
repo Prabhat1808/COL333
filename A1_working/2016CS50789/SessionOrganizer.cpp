@@ -1,8 +1,3 @@
-/* 
- * File:   SessionOrganizer.cpp
- * Author: Kapil Thakkar
- * 
- */
 
 #include "SessionOrganizer.h"
 #include "Util.h"
